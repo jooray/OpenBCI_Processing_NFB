@@ -1,8 +1,17 @@
 //import ddf.minim.analysis.*; //for FFT
 
+import ddf.minim.Minim;
+import ddf.minim.AudioOutput;
+import ddf.minim.ugens.*;
+
 class EEG_Processing_User {
   private float fs_Hz;  //sample rate
   private int nchan;  
+
+  Minim       minim;
+  AudioOutput out;
+  Oscil[]       waves;
+
   
   //add your own variables here
   
@@ -11,9 +20,28 @@ class EEG_Processing_User {
   EEG_Processing_User(int NCHAN, float sample_rate_Hz) {
       nchan = NCHAN;
     fs_Hz = sample_rate_Hz;
+    
+      minim = new Minim(this);
+  
+      // use the getLineOut method of the Minim object to get an AudioOutput object
+      out = minim.getLineOut();
+  
+      // create a sine wave Oscil, set to 440 Hz, at 0.5 amplitude
+      waves = new Oscil[8];
+      for (int i=0 ; i<8; i++) {
+        waves[i] = new Oscil( 440 + (i*50), 0.0f, Waves.SINE );
+        waves[i].patch( out );
+      }
+      
   }
   
   //add some functions here...if you'd like
+
+  private void setTone(int channel, float amplitude) {
+    waves[channel].setAmplitude(amplitude);
+    waves[channel].setFrequency(350 + (channel*80) + (100*amplitude)); // 400 - 800Hz is the best frequency
+  }
+  
   
   //here is the processing routine called by the OpenBCI main program...update this with whatever you'd like to do
   public void process(float[][] data_newest_uV, //holds raw EEG data that is new since the last call
@@ -41,9 +69,21 @@ class EEG_Processing_User {
     float FFT_freq_Hz, FFT_value_uV;
     for (int Ichan=0;Ichan < nchan; Ichan++) {
       //loop over each new sample
+      
+      float amplitude = 0;
+      float max_amplitude = 0;
+      int samples = 0;
+      
       for (int Ibin=0; Ibin < fftBuff[Ichan].specSize(); Ibin++){
         FFT_freq_Hz = fftData[Ichan].indexToFreq(Ibin);
         FFT_value_uV = fftData[Ichan].getBand(Ibin);
+        
+        if ((FFT_freq_Hz >= 7.5) && (FFT_freq_Hz <= 12.5)) { // we're in alpha band
+            if (FFT_value_uV > max_amplitude) max_amplitude = FFT_value_uV;
+            amplitude = amplitude + FFT_value_uV;
+            samples++;
+        }
+        
         
         //add your processing here...
         
@@ -51,6 +91,15 @@ class EEG_Processing_User {
         
         //println("EEG_Processing_User: Ichan = " + Ichan + ", Freq = " + FFT_freq_Hz + "Hz, FFT Value = " + FFT_value_uV + "uV/bin");
       }
+      
+     System.out.println((Ichan+1) + ": " + (amplitude/samples) + "(max: " + max_amplitude +")");
+
+     if (isChannelActive(Ichan)) {
+        if (max_amplitude < 10) setTone(Ichan, map((max_amplitude<5) ? max_amplitude : 5, 0, 5, 0, 1));
+          else setTone(Ichan,0);
+    
+     } else setTone(Ichan,0);
+
     }  
   }
 }
