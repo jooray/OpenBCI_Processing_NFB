@@ -25,12 +25,22 @@ class EEG_Processing_User {
   
       // use the getLineOut method of the Minim object to get an AudioOutput object
       out = minim.getLineOut();
+      float panFactor = 1;                 // 1 means total left/right pan, 0 means MONO (all tones in both
+                                           // channels, 0.8 means mixing 80/20, good for headphones
+      Pan left = new Pan(-1 * panFactor);
+      Pan right = new Pan(1 * panFactor);
+      left.patch(out);
+      right.patch(out);
   
       // create a sine wave Oscil, set to 440 Hz, at 0.5 amplitude
       waves = new Oscil[8];
       for (int i=0 ; i<8; i++) {
         waves[i] = new Oscil( 440 + (i*50), 0.0f, Waves.SINE );
-        waves[i].patch( out );
+        if (i%2 == 0)
+          waves[i].patch( left );
+        else
+          waves[i].patch( right );
+        
       }
       
   }
@@ -64,7 +74,7 @@ class EEG_Processing_User {
         //println("EEG_Processing_User: Ichan = " + Ichan + ", Isamp = " + Isamp + ", EEG Value = " + EEG_value_uV + " uV");
       }
     }
-        
+    
     //OR, you could loop over each EEG channel and do some sort of frequency-domain processing from the FFT data
     float FFT_freq_Hz, FFT_value_uV;
     for (int Ichan=0;Ichan < nchan; Ichan++) {
@@ -91,11 +101,10 @@ class EEG_Processing_User {
         
         //println("EEG_Processing_User: Ichan = " + Ichan + ", Freq = " + FFT_freq_Hz + "Hz, FFT Value = " + FFT_value_uV + "uV/bin");
       }
-      
-     System.out.println((Ichan+1) + ": " + (amplitude/samples) + "(max: " + max_amplitude +")");
 
      if (isChannelActive(Ichan)) {
-        if (max_amplitude < 10) setTone(Ichan, map((max_amplitude<5) ? max_amplitude : 5, 0, 5, 0, 1));
+        System.out.println((Ichan+1) + ": " + (amplitude/samples) + "(max: " + max_amplitude +") over " + samples +" samples");
+        if (max_amplitude < 15) setTone(Ichan, map((max_amplitude<5) ? max_amplitude : 5, 0, 5, 0, 1));
           else setTone(Ichan,0);
     
      } else setTone(Ichan,0);
