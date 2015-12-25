@@ -11,10 +11,15 @@ class EEG_Processing_User {
   Minim       minim;
   AudioOutput out;
   Oscil[]       waves;
+  int numHarmonic = 2; // number of harmonic frequencies for each wave
 
   
   //add your own variables here
   
+ 
+  private float baseFrequency(int channel, float amplitude) {
+    return (300 + (channel*50) /* + (100*amplitude)*/);
+  }
  
   //class constructor
   EEG_Processing_User(int NCHAN, float sample_rate_Hz) {
@@ -25,22 +30,24 @@ class EEG_Processing_User {
   
       // use the getLineOut method of the Minim object to get an AudioOutput object
       out = minim.getLineOut();
-      float panFactor = 1;                 // 1 means total left/right pan, 0 means MONO (all tones in both
+      float panFactor = 0.8f;                 // 1 means total left/right pan, 0 means MONO (all tones in both
                                            // channels, 0.8 means mixing 80/20, good for headphones
-      Pan left = new Pan(-1 * panFactor);
-      Pan right = new Pan(1 * panFactor);
-      left.patch(out);
-      right.patch(out);
   
       // create a sine wave Oscil, set to 440 Hz, at 0.5 amplitude
-      waves = new Oscil[8];
-      for (int i=0 ; i<8; i++) {
-        waves[i] = new Oscil( 440 + (i*50), 0.0f, Waves.SINE );
-        if (i%2 == 0)
-          waves[i].patch( left );
-        else
-          waves[i].patch( right );
-        
+      waves = new Oscil[8 * numHarmonic];
+      for (int i=0 ; i<8; i++) 
+        for (int j=0 ; j<numHarmonic ; j++) {
+        waves[(i*numHarmonic)+j] = new Oscil( baseFrequency(i,0f)*(j+1), 0.0f, Waves.SINE );
+        if (i%2 == 0) {
+          Pan left = new Pan((-1f) * panFactor);
+          waves[(i*numHarmonic)+j].patch( left );
+          left.patch( out );
+        }
+        else {
+          Pan right = new Pan(1f * panFactor);
+          waves[(i*numHarmonic)+j].patch( right );
+          right.patch(out);
+        }
       }
       
   }
@@ -48,8 +55,10 @@ class EEG_Processing_User {
   //add some functions here...if you'd like
 
   private void setTone(int channel, float amplitude) {
-    waves[channel].setAmplitude(amplitude);
-    waves[channel].setFrequency(350 + (channel*80) + (100*amplitude)); // 400 - 800Hz is the best frequency
+    for (int j=0 ; j<numHarmonic ; j++) {
+      waves[(channel*numHarmonic)+j].setAmplitude(amplitude);
+      waves[(channel*numHarmonic)+j].setFrequency(baseFrequency(channel, amplitude)*(j+1)); // 400 - 800Hz is the best frequency
+    }
   }
   
   
