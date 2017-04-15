@@ -56,7 +56,6 @@ public class OutputFile_rawtxt {
 
   public void writeHeader(float fs_Hz) {
     output.println("%OpenBCI Raw EEG Data");
-    output.println("%");
     output.println("%Sample Rate = " + fs_Hz + " Hz");
     output.println("%First Column = SampleIndex");
     output.println("%Other Columns = EEG data in microvolts followed by Accel Data (in G) interleaved with Aux Data");
@@ -81,7 +80,7 @@ public class OutputFile_rawtxt {
     int nVal = values.length;
     for (int Ival = 0; Ival < nVal; Ival++) {
       output.print(", ");
-      output.print(String.format("%.2f", scale_fac * float(values[Ival])));
+      output.print(String.format(Locale.US, "%.2f", scale_fac * float(values[Ival])));
     }
   }
 
@@ -140,11 +139,11 @@ class Table_CSV extends Table {
           setRowCount(row << 1);
         }
         if (row == 0 && header) {
-          setColumnTitles(tsv ? PApplet.split(line, '\t') : splitLineCSV(line));
+          setColumnTitles(tsv ? PApplet.split(line, '\t') : splitLineCSV(line, reader));
           header = false;
         } 
         else {
-          setRow(row, tsv ? PApplet.split(line, '\t') : splitLineCSV(line));
+          setRow(row, tsv ? PApplet.split(line, '\t') : splitLineCSV(line, reader));
           row++;
         }
 
@@ -178,4 +177,3 @@ class Table_CSV extends Table {
     }
   }
 }
-
