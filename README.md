@@ -1,3 +1,9 @@
+### Newer version available ###
+
+TL;DR: [Go here](https://github.com/jooray/OpenBCI_GUI_Neurofeedback)...
+
+This repository is based off the old [OpenBCI_Processing](https://github.com/OpenBCI/OpenBCI_Processing). There's [a newer version of the GUI that supports recent boards](https://github.com/openBCI/OpenBCI_GUI) (such as Ganglion).  And there is [a newer version of this project that adds neurofeedback tones to this GUI](https://github.com/jooray/OpenBCI_GUI_Neurofeedback).
+
 ### Neurofeedback patch for the OpenBCI_Processing GUI
 
 This version of standard [OpenBCI_Processing](https://github.com/OpenBCI/OpenBCI_Processing) GUI adds a tone neurofeedback for alpha band (7.5-12.5Hz) for all channels. The tone is hardcoded. The feedback is both with amplitude of the tone and slight changes of frequency. The tone is different for each feedback channel. This is a pretty basic, but working feedback proof of concept.
